@@ -1,0 +1,58 @@
+Triangle-Reversi/Temp/
+Temp/
+Obj/
+UnityGenerated/
+Library/
+UnityVS/
+
+# ===================================== #
+# Visual Studio / MonoDevelop generated #
+# ===================================== #
+ExportedObj/
+*.svd
+*.userprefs
+*.csproj
+*.pidb
+*.suo
+*.sln
+*.user
+*.unityproj
+*.booproj
+ 
+# ============ #
+# OS generated #
+# ============ #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+Triangle-Reversi/UpgradeLog*
+*.htm
+*.csproj
+Triangle-Reversi/Assembly-CSharp.csproj
+*.dwlt
+Triangle-Reversi/Library/CurrentLayout.dwlt
+Triangle-Reversi/Assembly-CSharp.csproj
+Triangle-Reversi/Library/CurrentLayout.dwlt
+Triangle-Reversi/*.csproj
+Triangle-Reversi/UnityVS.*
+Triangle-Reversi/Assets/UnityVS/Editor/*.dll
+Triangle-Reversi/Library/CurrentLayout.dwlt
+Triangle-Reversi/Assets/UnityVS/*
+Triangle-Reversi/ProjectSettings/UnityAdsSettings.asset
+*.orig
+*.orig.meta
+Triangle-Reversi/\.vs/Triangle-Reversi/v15/sqlite3/storage\.ide
+
+Triangle-Reversi/\.vscode/
+
+/Exectuable/
+/Executable/
+/Triangle-Reversi/.vs/
+/Triangle-Reversi/Logs/IncrementalCompiler
+/God/unity_incremental_compiler_server.log
+/Triangle-Reversi/Assets/EntityCache/Resources.meta
