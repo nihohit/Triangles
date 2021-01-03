@@ -4,9 +4,10 @@ using UnityEngine;
 using System;
 using System.Linq;
 
+public enum Player { Blue, Red };
+
 public class Grid : MonoBehaviour {
   public enum GridShape { Triangle };
-  private enum Player { Blue, Red };
 
   public GridShape shape;
   public int length;

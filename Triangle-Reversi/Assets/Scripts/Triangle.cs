@@ -4,13 +4,12 @@ using UnityEngine;
 
 public class Triangle : MonoBehaviour {
   public enum DisplayColor { White, Yellow, Red, Blue };
-  public enum Owner { None, Red, Blue };
 
   public int xIndex;
   public int yIndex;
   public bool inverted;
   public DisplayColor displayColor;
-  public Owner owner;
+  public Player? owner;
 
   private const float kSpacing = 0.05F;
   private const float kScale = 1F / 3F;
@@ -55,13 +54,14 @@ public class Triangle : MonoBehaviour {
     }
   }
 
-  private DisplayColor displayColorForOwner(Owner owner) {
+  private DisplayColor displayColorForOwner(Player? owner) {
+    if (owner == null) {
+      return DisplayColor.White;
+    }
     switch (owner) {
-      case Owner.None:
-        return DisplayColor.White;
-      case Owner.Blue:
+      case Player.Blue:
         return DisplayColor.Blue;
-      case Owner.Red:
+      case Player.Red:
         return DisplayColor.Red;
       default:
         return DisplayColor.White;
@@ -77,8 +77,12 @@ public class Triangle : MonoBehaviour {
     SetDisplayColor(displayColorForOwner(owner));
   }
 
-  public void SetOwner(Owner owner) {
+  public void SetOwner(Player owner) {
     this.owner = owner;
     ResetDisplayColor();
+  }
+
+  public Vector2Int Coords() {
+    return new Vector2Int(xIndex, yIndex);
   }
 }
