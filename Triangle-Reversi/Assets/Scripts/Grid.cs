@@ -23,17 +23,16 @@ public class Grid : MonoBehaviour {
         var triangle = Instantiate(trianglePrefab).GetComponent<Triangle>();
         triangle.Setup(j, i - (length / 2), Math.Abs(j + i) % 2 == 1, this);
         map.Add(new Vector2Int(j, i - (length / 2)), triangle);
-        Debug.Log(new Vector2Int(j, i - (length / 2)));
       }
     }
-    map[new Vector2Int(1, 0)].SetOwner(Triangle.Owner.Blue);
-    map[new Vector2Int(-1, 0)].SetOwner(Triangle.Owner.Red);
-    map[new Vector2Int(-1, 1)].SetOwner(Triangle.Owner.Blue);
-    map[new Vector2Int(1, 1)].SetOwner(Triangle.Owner.Red);
-    map[new Vector2Int(1, -1)].SetOwner(Triangle.Owner.Red);
-    map[new Vector2Int(-1, -1)].SetOwner(Triangle.Owner.Blue);
-    map[new Vector2Int(-1, 2)].SetOwner(Triangle.Owner.Red);
-    map[new Vector2Int(1, 2)].SetOwner(Triangle.Owner.Blue);
+    map[new Vector2Int(1, 0)].SetOwner(Player.Blue);
+    map[new Vector2Int(-1, 0)].SetOwner(Player.Red);
+    map[new Vector2Int(-1, 1)].SetOwner(Player.Blue);
+    map[new Vector2Int(1, 1)].SetOwner(Player.Red);
+    map[new Vector2Int(1, -1)].SetOwner(Player.Red);
+    map[new Vector2Int(-1, -1)].SetOwner(Player.Blue);
+    map[new Vector2Int(-1, 2)].SetOwner(Player.Red);
+    map[new Vector2Int(1, 2)].SetOwner(Player.Blue);
   }
 
   // Start is called before the first frame update
@@ -47,8 +46,75 @@ public class Grid : MonoBehaviour {
     startTurn();
   }
 
+  private enum Direction { Right, Left, UpLeft, UpRight, DownLeft, DownRight };
+
+  private Triangle.DisplayColor colorForPlayer() {
+    return currentPlayer == Player.Blue ? Triangle.DisplayColor.Blue : Triangle.DisplayColor.Red;
+  }
+
+  private Vector2Int directionVector(Triangle triangle, Direction direction) {
+    switch (direction) {
+      case Direction.UpLeft:
+        return triangle.inverted ? Vector2Int.down : Vector2Int.left;
+
+      case Direction.UpRight:
+        return triangle.inverted ? Vector2Int.down : Vector2Int.right;
+
+      case Direction.Right:
+        return Vector2Int.right;
+
+      case Direction.Left:
+        return Vector2Int.left;
+
+      case Direction.DownRight:
+        return triangle.inverted ? Vector2Int.right : Vector2Int.up;
+
+      case Direction.DownLeft:
+        return triangle.inverted ? Vector2Int.left : Vector2Int.up;
+    }
+    throw new Exception($"Unknown direction {direction}");
+  }
+
+  private Triangle nextTriangle(Triangle triangle, Direction direction) {
+    return map.TryGetValue(triangle.Coords() + directionVector(triangle, direction), out Triangle nextTriangle) ? nextTriangle : null;
+  }
+
+  private IEnumerable<Triangle> trianglesToMatchInDirection(Triangle triangle, Direction direction) {
+    Debug.Log($"start in {direction} from {triangle.Coords()}");
+    var triangles = new List<Triangle>();
+    var currentTriangle = triangle;
+
+    while (currentTriangle != null) {
+      Debug.Log($"count: {triangles.Count}");
+      triangles.Add(currentTriangle);
+      currentTriangle = nextTriangle(currentTriangle, direction);
+      if (currentTriangle?.owner == null) {
+        Debug.Log($"hit null in {direction}");
+        return Enumerable.Empty<Triangle>();
+      }
+      if (currentTriangle.owner == currentPlayer) {
+        Debug.Log($"found in {direction}");
+        return triangles.Any(foundTriangle => foundTriangle.owner != null) ? triangles : Enumerable.Empty<Triangle>();
+      }
+    }
+    return Enumerable.Empty<Triangle>();
+  }
+
+
+  static readonly IEnumerable<Direction> kDirections = new[] {
+    Direction.DownLeft, Direction.DownRight, Direction.Left, Direction.Right, Direction.UpLeft, Direction.UpRight };
+
+  private IEnumerable<Triangle> trianglesToMatch(Triangle triangle) {
+    Debug.Log("try match");
+    return triangle.owner != null ? Enumerable.Empty<Triangle>() : kDirections.SelectMany(direction => trianglesToMatchInDirection(triangle, direction));
+  }
+
+  private bool isPlayable(Triangle triangle) {
+    return triangle.owner == null && trianglesToMatch(triangle).Any();
+  }
+
   private IEnumerable<Triangle> getPlayableTiles() {
-    return new List<Triangle>();
+    return map.Values.Where(isPlayable).Distinct();
   }
 
   private void resetTriangles() {
@@ -85,15 +151,19 @@ public class Grid : MonoBehaviour {
     }
     currentTriangle = triangle;
     resetTriangles();
-    currentTriangle.SetDisplayColor(Triangle.DisplayColor.Yellow);
-  }
-
-  private Triangle.Owner ownerForPlayer() {
-    return currentPlayer == Player.Blue ? Triangle.Owner.Blue : Triangle.Owner.Red;
+    var color = colorForPlayer();
+    foreach (var matchedTriangle in trianglesToMatch(triangle)) {
+      matchedTriangle.SetDisplayColor(color);
+    }
   }
 
   public void TriangleClicked(Triangle triangle) {
-    triangle.owner = ownerForPlayer();
+    if (!isPlayable(triangle)) {
+      return;
+    }
+    foreach (var matchedTriangle in trianglesToMatch(triangle)) {
+      matchedTriangle.SetOwner(currentPlayer);
+    }
     startTurn();
   }
 }
