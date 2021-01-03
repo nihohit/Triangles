@@ -19,20 +19,32 @@ public class Grid : MonoBehaviour {
 
   void initializeTriangle(GameObject trianglePrefab) {
     for (int i = 0; i < length; ++i) {
-      for (int j = -i; j <= i; ++j) {
+      var difference = length - i - 1;
+      for (int j = -difference; j <= difference; ++j) {
         var triangle = Instantiate(trianglePrefab).GetComponent<Triangle>();
         triangle.Setup(j, i - (length / 2), Math.Abs(j + i) % 2 == 1, this);
         map.Add(new Vector2Int(j, i - (length / 2)), triangle);
       }
     }
-    map[new Vector2Int(1, 0)].SetOwner(Player.Blue);
-    map[new Vector2Int(-1, 0)].SetOwner(Player.Red);
-    map[new Vector2Int(-1, 1)].SetOwner(Player.Blue);
-    map[new Vector2Int(1, 1)].SetOwner(Player.Red);
-    map[new Vector2Int(1, -1)].SetOwner(Player.Red);
-    map[new Vector2Int(-1, -1)].SetOwner(Player.Blue);
-    map[new Vector2Int(-1, 2)].SetOwner(Player.Red);
-    map[new Vector2Int(1, 2)].SetOwner(Player.Blue);
+    if (map[Vector2Int.zero].inverted) {
+      map[Vector2Int.right].SetOwner(Player.Blue);
+      map[Vector2Int.left].SetOwner(Player.Red);
+      map[new Vector2Int(-1, 1)].SetOwner(Player.Blue);
+      map[new Vector2Int(1, 1)].SetOwner(Player.Red);
+      map[new Vector2Int(1, -1)].SetOwner(Player.Red);
+      map[new Vector2Int(-1, -1)].SetOwner(Player.Blue);
+      map[new Vector2Int(-1, 2)].SetOwner(Player.Red);
+      map[new Vector2Int(1, 2)].SetOwner(Player.Blue);
+    } else {
+      map[new Vector2Int(1, 0)].SetOwner(Player.Blue);
+      map[new Vector2Int(-1, 0)].SetOwner(Player.Red);
+      map[new Vector2Int(-1, 1)].SetOwner(Player.Blue);
+      map[new Vector2Int(1, 1)].SetOwner(Player.Red);
+      map[new Vector2Int(1, -1)].SetOwner(Player.Red);
+      map[new Vector2Int(-1, -1)].SetOwner(Player.Blue);
+      map[new Vector2Int(-1, -2)].SetOwner(Player.Red);
+      map[new Vector2Int(1, -2)].SetOwner(Player.Blue);
+    }
   }
 
   // Start is called before the first frame update
@@ -55,10 +67,10 @@ public class Grid : MonoBehaviour {
   private Vector2Int directionVector(Triangle triangle, Direction direction) {
     switch (direction) {
       case Direction.UpLeft:
-        return triangle.inverted ? Vector2Int.down : Vector2Int.left;
+        return triangle.inverted ? Vector2Int.up : Vector2Int.left;
 
       case Direction.UpRight:
-        return triangle.inverted ? Vector2Int.down : Vector2Int.right;
+        return triangle.inverted ? Vector2Int.up : Vector2Int.right;
 
       case Direction.Right:
         return Vector2Int.right;
@@ -67,10 +79,10 @@ public class Grid : MonoBehaviour {
         return Vector2Int.left;
 
       case Direction.DownRight:
-        return triangle.inverted ? Vector2Int.right : Vector2Int.up;
+        return triangle.inverted ? Vector2Int.right : Vector2Int.down;
 
       case Direction.DownLeft:
-        return triangle.inverted ? Vector2Int.left : Vector2Int.up;
+        return triangle.inverted ? Vector2Int.left : Vector2Int.down;
     }
     throw new Exception($"Unknown direction {direction}");
   }

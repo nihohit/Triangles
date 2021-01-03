@@ -36,7 +36,7 @@ public class Triangle : MonoBehaviour {
     }
     this.name = $"Triangle {x} {y}";
 
-    this.transform.position = new Vector3(xIndex * (0.5F + kSpacing), yIndex * (-1 - kSpacing), 0);
+    this.transform.position = new Vector3(xIndex * (0.5F + kSpacing), yIndex * (1 + kSpacing), 0);
   }
 
   private Color colorForDisplayColor(DisplayColor color) {
