@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Linq;
+using UnityEngine.SceneManagement;
 
 public enum Player { Blue, Red };
 
@@ -12,6 +13,7 @@ public class Grid : MonoBehaviour {
   public GridShape shape;
   public int length;
   public GameObject currentPlayerText;
+  public GameObject newGameButton;
 
   private readonly Dictionary<Vector2Int, Triangle> map = new Dictionary<Vector2Int, Triangle>();
   private Player currentPlayer = Player.Blue;
@@ -21,33 +23,31 @@ public class Grid : MonoBehaviour {
   private TMPro.TMP_Text currentPlayerTextMesh;
 
   void initializeTriangle(GameObject trianglePrefab) {
+    var complement = length % 2;
+    var lengthIsOdd = complement == 1;
     for (int i = 0; i < length; ++i) {
-      var difference = length - i - 1;
-      for (int j = -difference; j <= difference; ++j) {
+      var start = lengthIsOdd ? length - i - 1 : length - i - 1;
+      for (int j = -start; j <= start; ++j) {
         var triangle = Instantiate(trianglePrefab).GetComponent<Triangle>();
         var key = new Vector2Int(j, i - (length / 2));
-        triangle.Setup(key.x, key.y, Math.Abs(j + i) % 2 == 1, this);
+        triangle.Setup(key.x, key.y, Math.Abs(j + i) % 2 == complement, this);
         map.Add(key, triangle);
       }
     }
-    if (map[Vector2Int.zero].inverted) {
-      map[Vector2Int.right].SetOwner(Player.Blue);
-      map[Vector2Int.left].SetOwner(Player.Red);
-      map[new Vector2Int(-1, 1)].SetOwner(Player.Blue);
-      map[new Vector2Int(1, 1)].SetOwner(Player.Red);
-      map[new Vector2Int(1, -1)].SetOwner(Player.Red);
-      map[new Vector2Int(-1, -1)].SetOwner(Player.Blue);
-      map[new Vector2Int(-1, 2)].SetOwner(Player.Red);
-      map[new Vector2Int(1, 2)].SetOwner(Player.Blue);
-    } else {
+    if (lengthIsOdd) {
+      map[new Vector2Int(0, -1)].SetOwner(Player.Blue);
+      map[new Vector2Int(-1, 0)].SetOwner(Player.Blue);
       map[new Vector2Int(1, 0)].SetOwner(Player.Blue);
-      map[new Vector2Int(-1, 0)].SetOwner(Player.Red);
-      map[new Vector2Int(-1, 1)].SetOwner(Player.Blue);
-      map[new Vector2Int(1, 1)].SetOwner(Player.Red);
+      map[new Vector2Int(0, 0)].SetOwner(Player.Red);
       map[new Vector2Int(1, -1)].SetOwner(Player.Red);
-      map[new Vector2Int(-1, -1)].SetOwner(Player.Blue);
-      map[new Vector2Int(-1, -2)].SetOwner(Player.Red);
-      map[new Vector2Int(1, -2)].SetOwner(Player.Blue);
+      map[new Vector2Int(-1, -1)].SetOwner(Player.Red);
+    } else {
+      map[new Vector2Int(0, -1)].SetOwner(Player.Blue);
+      map[new Vector2Int(-1, 0)].SetOwner(Player.Blue);
+      map[new Vector2Int(1, 0)].SetOwner(Player.Blue);
+      map[new Vector2Int(0, 0)].SetOwner(Player.Red);
+      map[new Vector2Int(1, -1)].SetOwner(Player.Red);
+      map[new Vector2Int(-1, -1)].SetOwner(Player.Red);
     }
   }
 
@@ -66,14 +66,12 @@ public class Grid : MonoBehaviour {
         map.Add(key, triangle);
       }
     }
-    map[new Vector2Int(2, 0)].SetOwner(Player.Blue);
-    map[new Vector2Int(-2, 0)].SetOwner(Player.Red);
-    map[new Vector2Int(-2, 1)].SetOwner(Player.Blue);
-    map[new Vector2Int(2, 1)].SetOwner(Player.Red);
-    map[new Vector2Int(2, -1)].SetOwner(Player.Red);
-    map[new Vector2Int(-2, -1)].SetOwner(Player.Blue);
-    map[new Vector2Int(-2, -2)].SetOwner(Player.Red);
-    map[new Vector2Int(2, -2)].SetOwner(Player.Blue);
+    map[new Vector2Int(0, -1)].SetOwner(Player.Blue);
+    map[new Vector2Int(-1, 0)].SetOwner(Player.Blue);
+    map[new Vector2Int(1, 0)].SetOwner(Player.Blue);
+    map[new Vector2Int(0, 0)].SetOwner(Player.Red);
+    map[new Vector2Int(1, -1)].SetOwner(Player.Red);
+    map[new Vector2Int(-1, -1)].SetOwner(Player.Red);
   }
 
   // Start is called before the first frame update
@@ -88,6 +86,7 @@ public class Grid : MonoBehaviour {
         initializeHexagon(prefab);
         break;
     }
+    newGameButton.SetActive(false);
     startTurn();
   }
 
@@ -168,12 +167,15 @@ public class Grid : MonoBehaviour {
 
   private void startTurn() {
     currentPlayer = currentPlayer == Player.Blue ? Player.Red : Player.Blue;
-    currentPlayerTextMesh.text = $"Current player: {(currentPlayer == Player.Blue ? "Blue" : "Red")}";
     playableTiles = getPlayableTiles().ToList();
-    if (!playableTiles.Any()) {
-      //TODO end game
+    if (playableTiles.Count == 0) {
+      var redTiles = map.Values.Count(triangle => triangle.owner == Player.Red);
+      var blueTiles = map.Values.Count(triangle => triangle.owner == Player.Blue);
+      currentPlayerTextMesh.text = $"{(redTiles == blueTiles ? "TIE!" : redTiles > blueTiles ? "Red Won!" : "Blue Won!")}\nRed tiles: {redTiles}\nBlue tiles: {blueTiles}";
+      newGameButton.SetActive(true);
       return;
     }
+    currentPlayerTextMesh.text = $"Current player: {(currentPlayer == Player.Blue ? "Blue" : "Red")}";
     resetTriangles();
   }
 
@@ -206,5 +208,10 @@ public class Grid : MonoBehaviour {
       matchedTriangle.SetOwner(currentPlayer);
     }
     startTurn();
+  }
+
+  public void StartNewGame() {
+    Debug.Log("start");
+    SceneManager.LoadScene("scenes/Start");
   }
 }
