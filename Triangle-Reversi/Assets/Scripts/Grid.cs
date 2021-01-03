@@ -7,7 +7,7 @@ using System.Linq;
 public enum Player { Blue, Red };
 
 public class Grid : MonoBehaviour {
-  public enum GridShape { Triangle };
+  public enum GridShape { Triangle, Hexagon };
 
   public GridShape shape;
   public int length;
@@ -25,8 +25,9 @@ public class Grid : MonoBehaviour {
       var difference = length - i - 1;
       for (int j = -difference; j <= difference; ++j) {
         var triangle = Instantiate(trianglePrefab).GetComponent<Triangle>();
-        triangle.Setup(j, i - (length / 2), Math.Abs(j + i) % 2 == 1, this);
-        map.Add(new Vector2Int(j, i - (length / 2)), triangle);
+        var key = new Vector2Int(j, i - (length / 2));
+        triangle.Setup(key.x, key.y, Math.Abs(j + i) % 2 == 1, this);
+        map.Add(key, triangle);
       }
     }
     if (map[Vector2Int.zero].inverted) {
@@ -50,6 +51,31 @@ public class Grid : MonoBehaviour {
     }
   }
 
+  void initializeHexagon(GameObject trianglePrefab) {
+    for (int i = 0; i < length; ++i) {
+      var difference = length - i;
+      for (int j = -difference - length + 1; j < difference + length; ++j) {
+        var triangle = Instantiate(trianglePrefab).GetComponent<Triangle>();
+        var key = new Vector2Int(j, i);
+        triangle.Setup(key.x, key.y, Math.Abs(j + i) % 2 == 0, this);
+        map.Add(key, triangle);
+
+        triangle = Instantiate(trianglePrefab).GetComponent<Triangle>();
+        key = new Vector2Int(j, -1 - i);
+        triangle.Setup(key.x, key.y, Math.Abs(j + i) % 2 == 1, this);
+        map.Add(key, triangle);
+      }
+    }
+    map[new Vector2Int(2, 0)].SetOwner(Player.Blue);
+    map[new Vector2Int(-2, 0)].SetOwner(Player.Red);
+    map[new Vector2Int(-2, 1)].SetOwner(Player.Blue);
+    map[new Vector2Int(2, 1)].SetOwner(Player.Red);
+    map[new Vector2Int(2, -1)].SetOwner(Player.Red);
+    map[new Vector2Int(-2, -1)].SetOwner(Player.Blue);
+    map[new Vector2Int(-2, -2)].SetOwner(Player.Red);
+    map[new Vector2Int(2, -2)].SetOwner(Player.Blue);
+  }
+
   // Start is called before the first frame update
   void Start() {
     currentPlayerTextMesh = currentPlayerText.GetComponent<TMPro.TMP_Text>();
@@ -57,6 +83,9 @@ public class Grid : MonoBehaviour {
     switch (shape) {
       case GridShape.Triangle:
         initializeTriangle(prefab);
+        break;
+      case GridShape.Hexagon:
+        initializeHexagon(prefab);
         break;
     }
     startTurn();
