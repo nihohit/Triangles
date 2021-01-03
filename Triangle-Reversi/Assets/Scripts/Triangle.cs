@@ -24,7 +24,7 @@ public class Triangle : MonoBehaviour {
   }
 
   void OnMouseDown() {
-    grid.TriangleClicked(xIndex, yIndex);
+    grid.TriangleClicked(this);
   }
 
   public void Setup(int x, int y, bool inverted, Grid grid) {

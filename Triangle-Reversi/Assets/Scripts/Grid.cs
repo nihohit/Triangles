@@ -2,13 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 
 public class Grid : MonoBehaviour {
   public enum GridShape { Triangle };
+  private enum Player { Blue, Red };
 
   public GridShape shape;
   public int length;
   private readonly Dictionary<Vector2Int, Triangle> map = new Dictionary<Vector2Int, Triangle>();
+  private Player currentPlayer = Player.Blue;
+  private List<Triangle> playableTiles;
+  private RaycastHit2D hit;
+  private Triangle currentTriangle;
 
   void initializeTriangle(GameObject trianglePrefab) {
     for (int i = 0; i < length; ++i) {
@@ -37,14 +43,56 @@ public class Grid : MonoBehaviour {
         initializeTriangle(prefab);
         break;
     }
+    startTurn();
   }
 
-  // Update is called once per frame
+  private IEnumerable<Triangle> getPlayableTiles() {
+    return new List<Triangle>();
+  }
+
+  private void resetTriangles() {
+    foreach (var resetTriangle in map.Values) {
+      resetTriangle.ResetDisplayColor();
+    }
+    foreach (var triangle in playableTiles) {
+      triangle.SetDisplayColor(Triangle.DisplayColor.Yellow);
+    }
+  }
+
+  private void startTurn() {
+    currentPlayer = currentPlayer == Player.Blue ? Player.Red : Player.Blue;
+    playableTiles = getPlayableTiles().ToList();
+    if (!playableTiles.Any()) {
+      //TODO end game
+      return;
+    }
+    resetTriangles();
+  }
+
   void Update() {
-
+    hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+    if (!hit.collider) {
+      if (currentTriangle != null) {
+        currentTriangle = null;
+        resetTriangles();
+      }
+      return;
+    }
+    var triangle = hit.collider.GetComponent<Triangle>();
+    if (triangle == currentTriangle) {
+      return;
+    }
+    currentTriangle = triangle;
+    resetTriangles();
+    currentTriangle.SetDisplayColor(Triangle.DisplayColor.Yellow);
   }
 
-  public void TriangleClicked(int xIndex, int yIndex) {
-    Debug.Log($"{xIndex}, {yIndex}");
+  private Triangle.Owner ownerForPlayer() {
+    return currentPlayer == Player.Blue ? Triangle.Owner.Blue : Triangle.Owner.Red;
+  }
+
+  public void TriangleClicked(Triangle triangle) {
+    triangle.owner = ownerForPlayer();
+    startTurn();
   }
 }
