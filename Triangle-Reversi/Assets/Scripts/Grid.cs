@@ -11,11 +11,14 @@ public class Grid : MonoBehaviour {
 
   public GridShape shape;
   public int length;
+  public GameObject currentPlayerText;
+
   private readonly Dictionary<Vector2Int, Triangle> map = new Dictionary<Vector2Int, Triangle>();
   private Player currentPlayer = Player.Blue;
   private List<Triangle> playableTiles;
   private RaycastHit2D hit;
   private Triangle currentTriangle;
+  private TMPro.TMP_Text currentPlayerTextMesh;
 
   void initializeTriangle(GameObject trianglePrefab) {
     for (int i = 0; i < length; ++i) {
@@ -49,6 +52,7 @@ public class Grid : MonoBehaviour {
 
   // Start is called before the first frame update
   void Start() {
+    currentPlayerTextMesh = currentPlayerText.GetComponent<TMPro.TMP_Text>();
     var prefab = Resources.Load<GameObject>("Triangle");
     switch (shape) {
       case GridShape.Triangle:
@@ -92,20 +96,16 @@ public class Grid : MonoBehaviour {
   }
 
   private IEnumerable<Triangle> trianglesToMatchInDirection(Triangle triangle, Direction direction) {
-    Debug.Log($"start in {direction} from {triangle.Coords()}");
     var triangles = new List<Triangle>();
     var currentTriangle = triangle;
 
     while (currentTriangle != null) {
-      Debug.Log($"count: {triangles.Count}");
       triangles.Add(currentTriangle);
       currentTriangle = nextTriangle(currentTriangle, direction);
       if (currentTriangle?.owner == null) {
-        Debug.Log($"hit null in {direction}");
         return Enumerable.Empty<Triangle>();
       }
       if (currentTriangle.owner == currentPlayer) {
-        Debug.Log($"found in {direction}");
         return triangles.Any(foundTriangle => foundTriangle.owner != null) ? triangles : Enumerable.Empty<Triangle>();
       }
     }
@@ -117,8 +117,7 @@ public class Grid : MonoBehaviour {
     Direction.DownLeft, Direction.DownRight, Direction.Left, Direction.Right, Direction.UpLeft, Direction.UpRight };
 
   private IEnumerable<Triangle> trianglesToMatch(Triangle triangle) {
-    Debug.Log("try match");
-    return triangle.owner != null ? Enumerable.Empty<Triangle>() : kDirections.SelectMany(direction => trianglesToMatchInDirection(triangle, direction));
+    return triangle.owner != null ? Enumerable.Empty<Triangle>() : kDirections.SelectMany(direction => trianglesToMatchInDirection(triangle, direction)).ToList();
   }
 
   private bool isPlayable(Triangle triangle) {
@@ -140,6 +139,7 @@ public class Grid : MonoBehaviour {
 
   private void startTurn() {
     currentPlayer = currentPlayer == Player.Blue ? Player.Red : Player.Blue;
+    currentPlayerTextMesh.text = $"Current player: {(currentPlayer == Player.Blue ? "Blue" : "Red")}";
     playableTiles = getPlayableTiles().ToList();
     if (!playableTiles.Any()) {
       //TODO end game
